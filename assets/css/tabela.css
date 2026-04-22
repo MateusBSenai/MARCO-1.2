@@ -1,0 +1,331 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import url("/agenda-de-eventos/assets/css/modal.css");
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Lato";
+}
+
+:root {
+    --header-size: 50px;
+    --margin-left-right: 200px;
+    --cor-base: #0D004E;
+    --height-input-form: 35px;
+}
+
+body {
+    padding-top: var(--header-size);
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    background-color: #E8E8E8;
+    overflow-x: hidden;
+    flex-direction: column;
+}
+
+.header {
+    position: fixed;
+    background-color: var(--cor-base);
+    width: 100%;
+    top: 0px;
+    height: var(--header-size);
+    z-index: 40;
+}
+
+.titulo-agenda {
+    margin-top: 80px;
+    text-align: center;
+}
+
+hr {
+    margin: 10px 0px;
+    width: calc(100vw - 2*(var(--margin-left-right)));
+}
+
+.container {
+    width: 100%;
+    margin: 0 var(--margin-left-right);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.modal-lateral {
+    position: absolute;
+    right: 0;
+    height: calc(100% - var(--header-size));
+    max-width: 400px;
+    padding: 40px;
+    background-color: white;
+    box-shadow: 0px 10px 10px rgb(216, 216, 216);
+    transform: translateX(100%)
+}
+
+@keyframes deslizarParaFora {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); } /* Move para a direita até sair */
+}
+
+@keyframes deslizarParaDentro {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); } /* Move para a direita até sair */
+}
+
+.open-add-evento {
+    position: absolute;
+    align-self: flex-end;
+    right: calc(var(--margin-left-right));
+
+    background-color: var(--cor-base);
+    padding: 10px 20px;
+    border-radius: 15px;
+    color: white;
+    transition: 0.2s;
+    font-weight: 600;
+    width: 150px;
+    height: 40px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.add-icon {
+    width: 15px;
+    height: 15px;
+}
+.open-add-evento:active {
+    transform: scale(0.95);
+    transition: 0.2s;
+}
+
+.open-add-evento:hover:not(.open-add-evento:active) {
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+.row-titulo{
+    width: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+}
+
+.form-control {
+    background-color: white;
+    border: 2px solid rgb(207, 207, 207);
+    padding: 10px 20px;
+    width: 100%;
+    max-height: var(--height-input-form);
+    border-radius: 10px;
+}
+
+.form-submit{
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+.salvar-form:hover{
+    transform: scale(1.1);
+    transition: 0.2s;
+}
+
+.salvar-form {
+    background-color: var(--cor-base);
+    box-shadow: 3px 3px 5px gray;
+    color: white;
+}
+
+.fechar-form{
+    background-color: rgba(255, 255, 255, 0);
+}
+.fechar-form:hover{
+    background-color: rgba(211, 211, 211, 0.736);
+}
+
+.botoes-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-self: flex-end;
+    margin-top: 10px;
+}
+
+div.titulo-form {
+    border-bottom: 1px solid black;
+    padding-bottom: 15px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+.titulo-input-form{
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+label.label-file {
+    width: 100%;
+    height: var(--height-input-form);
+    align-items: center;
+    display: flex;
+    border: 1px solid rgb(207, 207, 207);
+    border-radius: 10px;
+    flex-direction: row;
+}
+
+.escolher-arquivo{
+    padding: 10px;
+    font-size: 12px;
+}
+div.escolher-arquivo{
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+
+    background-color: var(--cor-base);
+    
+    flex: 2;
+    color: white;
+    font-weight: 600;
+    font-size: 13.5px;
+
+    cursor: pointer;
+}
+p.escolher-arquivo{
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    flex: 3;
+}
+
+#input-file {
+    display: none;
+}
+
+.linha-base-tabela th{
+    background-color: var(--cor-base);
+    padding: 10px;
+    color: white;
+}
+.col-inicial {
+    border-top-left-radius: 15px;
+    margin-bottom: 10px;
+}
+.col-final {
+    border-top-right-radius: 15px;
+    display: flex;
+    justify-content: space-around;
+
+    .deletar-evento{
+        filter: invert(100%);
+        cursor: auto;
+    }
+    .editar-evento{
+        filter: invert(100%);
+        cursor: auto;
+    }
+}
+
+.col-final-conteudo{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.final-tabela {
+    display: block;
+    width: 100%;
+    height: 30px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    background-color: white;
+}
+table {
+    width: calc(100vw - 2*(var(--margin-left-right)));
+    background-color: white;
+    border-radius: 15px;
+    text-align: center;
+}
+.eventos{
+    padding-top: 5px;
+    padding: 5px;
+}
+tr:hover:not(.final-tabela){
+    background-color: rgb(238, 238, 238);
+}
+
+button[name="deletar"], button[name="editar"]{
+    background-color: #0d004e00;
+    border: 0;
+}
+.deletar-evento {
+    width: 20px;
+    cursor: pointer;
+}
+.editar-evento {
+    width: 20px;
+    cursor: pointer;
+}
+.brasil, .logout {
+    height: auto;
+    position: absolute;
+    right: var(--margin-left-right);
+    top: calc(var(--header-size)/2);
+    transform: translateY(-50%);
+}
+.logout{
+    width: 20px;
+    cursor: pointer;
+}
+.brasil {
+    width: 25px;
+    right:calc(var(--margin-left-right) + 30px);
+}
+.imagem-tabela {
+    height: 30px;
+    width: 30px;
+    object-fit: cover;
+    background-color: gray;
+    border-radius: 30px;
+}
+.sem-imagem {
+    height: 30px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+footer {
+    width: 100%;
+    background-color: var(--cor-base);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 20px var(--margin-left-right);
+    margin-top: auto;
+}
+.logo-header {
+    position: absolute;
+    left: var(--margin-left-right);
+    top: calc(var(--header-size)/2) ;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+.logo-header img {
+    width: 25px;
+    height: auto;
+}
+.logo-header p {
+    color: white;
+    font-weight: 550;
+    cursor: default;
+}

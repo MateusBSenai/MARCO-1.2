@@ -1,0 +1,23 @@
+.fade {
+    background-color: rgba(0, 0, 0, 0.549);
+    width: 100vw;
+    height: 100vh;
+    position: absolute; 
+    z-index: 10;
+    display: none;
+}
+.modal {
+    position: absolute;
+    width: 500px;
+    height: 400px;
+    background-color: white;
+    box-shadow: -3px 3px 7px rgb(112, 112, 112);
+    z-index: 11;
+    padding: 50px;
+    border-radius: 30px;
+
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+}

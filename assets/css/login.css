@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Lato";
+}
+
+:root{
+    --cor-base: #E8E8E8;
+    --cor-secundária: #0D004E; 
+    --width-container-login: 400px;
+    --height-container-login: 370px;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--cor-base);
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-container{
+    width: var(--width-container-login);
+    height: var(--height-container-login);
+    background-color: #0D004E;
+    border-radius: 15px;
+    padding: 50px;
+    box-shadow: -3px 3px 10px gray;
+    position: relative;
+}
+.login-container h2 {
+    font-size: 30px;
+    color: white;
+    cursor: default;
+    font-weight: 900;
+}
+.marcador-inputs{
+    font-size: 15px;
+    color: white;
+    font-weight: 400;
+    margin: 10px 0px 5px 0px ;
+    cursor: default;
+}
+
+.input-login{
+    padding: 8px 20px;
+    width: 100%;
+    border-radius: 10px;
+    border: 0;
+}
+
+.inputs{
+    position: absolute;
+    width: calc(var(--width-container-login) - 100px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.entrar-login{
+    border: 0;
+    background-color: var(--cor-base);
+    color: var(--cor-secundária);
+    width: auto;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    position: absolute;
+    right: 50px;
+    bottom: 50px;
+    cursor: pointer;
+    transition: 0.1s;
+}
+.entrar-login:hover{
+    transform: scale(1.1);
+    transition: 0.2s;
+}
+
+h5.alerta-login{
+    color: red;
+    position: absolute;
+    bottom: 50px;
+    width: 50%;
+}
+
+.magnus {
+    color: var(--cor-base);
+    font-size: 17px;
+    font-weight: 600;
+}
+.magnus-logo img {
+    width: 25px;
+    height: auto;
+}
+.magnus-logo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 15px;
+}
