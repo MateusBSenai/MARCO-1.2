@@ -41,13 +41,19 @@ def login(page):
                     
                     set_storage(page, "logado", True)
                     set_storage(page, "user_id", user["id"])
-                    set_storage(page, "email", user["email"])
-                    set_storage(page, "nome", user["nome"])
-                    
+                    set_storage(page, "user_name", user["nome"])
+                    set_storage(page, "is_admin", user.get("admin", False))
+
                     mensagem_erro.value = ""
                     page.clean()
-                    from home import home
-                    home(page)
+                    if user.get("admin") == True:
+                        print("Redirecionando para área ADM")
+                        from admin_panel import admin_panel # Você criará este arquivo
+                        admin_panel(page)
+                    else:
+                        print("Redirecionando para Home de Usuário")
+                        from home import home
+                        home(page)
                 else:
                     mensagem_erro.value = "Email ou senha incorretos!"
             else:

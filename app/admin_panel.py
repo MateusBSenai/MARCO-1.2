@@ -1,0 +1,265 @@
+import flet as ft
+import requests
+from config import HEADERS, SUPABASE_URL
+import cv2
+
+def admin_panel(page):
+    page.title = "Painel Administrativo - O Show"
+    page.bgcolor = "#F5F5F5"
+    page.scroll = ft.ScrollMode.ALWAYS
+
+    # --- VARIÁVEIS DE INTERFACE PARA RECARREGAR ---
+    txt_vendidos = ft.Text("0", size=30, color="white", weight="bold")
+    txt_presentes = ft.Text("0", size=30, color="#0D004E", weight="bold")
+    lista_ingressos = ft.Column(spacing=10)
+
+    def sair(e):
+        from components import set_storage
+        set_storage(page, "logado", False)
+        page.clean()
+        from login import login
+        login(page)
+
+    def dar_checkin(id_ingresso):
+        try:
+            url = f"{SUPABASE_URL}/ingressos?id=eq.{id_ingresso}"
+            r = requests.patch(url, json={"usado": True}, headers=HEADERS)
+            if r.status_code in [200, 204]:
+                atualizar_dados() # Atualiza os números na tela
+                return True
+        except Exception as e:
+            print(f"Erro ao invalidar: {e}")
+        return False
+    
+    def abrir_leitor_camera(e):
+        cap = cv2.VideoCapture(0) # Abre a webcam
+        detector = cv2.QRCodeDetector()
+
+        # Snackbar para avisar o admin
+        page.snack_bar = ft.SnackBar(ft.Text("Câmera aberta! Aponte para o QR Code do cliente."))
+        page.snack_bar.open = True
+        page.update()
+
+        while True:
+            _, img = cap.read()
+            data, bbox, _ = detector.detectAndDecode(img)
+
+            if data: # Se ele leu o texto do QR Code
+                # Busca o ingresso no Supabase por aquele código (hash)
+                url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{data}&select=id,usado"
+                res = requests.get(url, headers=HEADERS).json()
+
+                if res:
+                    ing = res[0]
+                    if ing['usado']:
+                        page.snack_bar = ft.SnackBar(ft.Text("ERRO: Este QR Code já foi utilizado!", bgcolor="red"))
+                    else:
+                        dar_checkin(ing['id']) # CHAMA A FUNÇÃO DE INVALIDAR
+                        page.snack_bar = ft.SnackBar(ft.Text("SUCESSO: Entrada Liberada!", bgcolor="green"))
+
+                    page.snack_bar.open = True
+                    page.update()
+                    break # Fecha a câmera após ler
+        
+            cv2.imshow("Leitor Magnus - Pressione Q para sair", img)
+            if cv2.waitKey(1) == ord('q'): # Se apertar 'Q', fecha
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+    # --- FUNÇÃO PARA BUSCAR E ATUALIZAR DADOS (O RECARREGAR) ---
+    def atualizar_dados(e=None):
+        try:
+            # 1. Buscar estatísticas gerais
+            r_stats = requests.get(f"{SUPABASE_URL}/ingressos?select=*", headers=HEADERS)
+            if r_stats.status_code == 200:
+                dados_total = r_stats.json()
+                total = len(dados_total)
+                presentes = len([i for i in dados_total if i.get("usado") == True])
+                
+                txt_vendidos.value = str(total)
+                txt_presentes.value = str(presentes)
+
+            # 2. Buscar lista detalhada
+            url_detalhada = f"{SUPABASE_URL}/ingressos?select=*,users(nome),eventos_db(titulo,valor_evento)"
+            r_detalhes = requests.get(url_detalhada, headers=HEADERS)
+            
+            if r_detalhes.status_code == 200:
+                ingressos = r_detalhes.json()
+                lista_ingressos.controls.clear()
+                
+                for ing in ingressos:
+                    nome_usuario = ing.get("users", {}).get("nome", "N/A")
+                    nome_evento = ing.get("eventos_db", {}).get("titulo", "N/A")
+                    valor = ing.get("eventos_db", {}).get("valor_evento", 0.0)
+                    usado = ing.get("usado", False)
+                    id_ingresso = ing.get("id") # Precisamos do ID para o banco
+
+                    # 1. CRIAR O BOTÃO DE CHECK-IN (Só aparece se não foi usado)
+                    botao_checkin = ft.IconButton(
+                        icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
+                        icon_color="green",
+                        tooltip="Validar Entrada",
+                        on_click=lambda e, idx=id_ingresso: dar_checkin(idx)
+                    ) if not usado else ft.Icon(ft.Icons.DONE_ALL, color="blue", size=20)
+
+                    # 2. ADICIONAR AO CONTAINER NA LISTA
+                    lista_ingressos.controls.append(
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.CONFIRMATION_NUMBER, color="#0D004E" if not usado else "grey"),
+                                ft.Column([
+                                    ft.Text(f"Dono: {nome_usuario}", weight="bold", size=14),
+                                    ft.Text(f"Evento: {nome_evento} | R$ {valor:.2f}", size=12),
+                                ], expand=True),
+                
+                                # O BOTÃO ENTRA AQUI
+                                botao_checkin, 
+                
+                                ft.Container(
+                                    content=ft.Text("USADO" if usado else "PENDENTE", size=10, color="white", weight="bold"),
+                                    bgcolor="green" if usado else "orange",
+                                    padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                                    border_radius=5,
+                                )
+                            ], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
+                            bgcolor="white",
+                            padding=15,
+                            border_radius=10,
+                            border=ft.border.all(1, "black12")
+                        )
+                    )
+            
+            page.update() # Agora ele vai chegar aqui sem erros!
+            
+        except Exception as ex:
+            print(f"Erro ao recarregar: {ex}")
+
+    # --- COMPONENTES VISUAIS ---
+
+    header = ft.Row([
+        ft.Text("Área Administrativa - Magnus", size=30, weight="bold", color="#0D004E"),
+        ft.Row([
+            ft.IconButton(ft.Icons.REFRESH, on_click=atualizar_dados, icon_color="blue", tooltip="Recarregar dados"),
+            ft.IconButton(ft.Icons.LOGOUT, on_click=sair, icon_color="red"),
+        ])
+    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+
+    stats_cards = ft.Row([
+        ft.Container(
+            content=ft.Column([ft.Text("Vendidos", color="white"), txt_vendidos]),
+            bgcolor="#0D004E", padding=20, border_radius=10, expand=True
+        ),
+        ft.Container(
+            content=ft.Column([ft.Text("Presentes (O Show)", color="#0D004E"), txt_presentes]),
+            bgcolor="#FFD700", padding=20, border_radius=10, expand=True
+        )
+    ])
+
+    # Botões de Ação (Com o botão central alterado conforme pedido)
+    # --- FUNÇÕES PARA ABRIR MODAIS ---
+    
+    def abrir_novo_evento(e):
+        # Campos do formulário (Baseado no seu Evento.php)
+        titulo_input = ft.TextField(label="Título do Evento")
+        data_input = ft.TextField(label="Data (DD/MM/AAAA)")
+        local_input = ft.TextField(label="Local")
+        valor_input = ft.TextField(label="Valor (R$)", value="0.00")
+        url_imagem = ft.TextField(label="URL da Imagem (Capa)")
+
+        def salvar_evento(e):
+            try:
+                # Pegando os valores
+                data_digitada = data_input.value.replace("/", "") # Remove barras se o usuário digitar
+
+                # Converte DDMMYYYY para YYYY-MM-DD
+                if len(data_digitada) == 8:
+                    data_formatada = f"{data_digitada[4:]}-{data_digitada[2:4]}-{data_digitada[:2]}"
+                else:
+                    print("Erro: Data deve ter o formato DDMMYYYY ou DD/MM/YYYY")
+                    return
+
+                novo_evento = {
+                    "titulo": titulo_input.value,
+                    "data_evento": data_formatada, # Agora vai como 2008-06-12
+                    "local_evento": local_input.value,
+                    "valor_evento": float(valor_input.value.replace(',', '.')),
+                    "hora_evento": "20:00:00", # Adicionei uma hora padrão, ajuste se tiver o campo
+                    "foto_evento": url_imagem.value if url_imagem.value else None
+                }
+
+                print(f"Tentando salvar formatado: {novo_evento}")
+
+                r = requests.post(f"{SUPABASE_URL}/eventos_db", json=novo_evento, headers=HEADERS)
+
+                if r.status_code in [200, 201]:
+                    modal_evento.open = False
+                    atualizar_dados()
+                    page.update()
+                else:
+                    print(f"Erro do Supabase: {r.status_code} - {r.text}")
+            
+            except Exception as ex:
+                print(f"Erro de execução: {ex}")
+
+        modal_evento = ft.AlertDialog(
+            title=ft.Text("Cadastrar Novo Show"),
+            content=ft.Column([titulo_input, data_input, local_input, valor_input, url_imagem], tight=True),
+            actions=[ft.TextButton("Salvar", on_click=salvar_evento)]
+        )
+        page.overlay.append(modal_evento)
+        modal_evento.open = True
+        page.update()
+
+    def abrir_usuarios(e):
+        # Busca usuários e seus ingressos (count)
+        r = requests.get(f"{SUPABASE_URL}/users?select=*,ingressos(count)", headers=HEADERS)
+        users = r.json()
+        
+        lista_users_ui = ft.Column(spacing=10, scroll=ft.ScrollMode.ALWAYS, height=400)
+        
+        for u in users:
+            qtd_ingressos = u.get("ingressos", [{}])[0].get("count", 0)
+            lista_users_ui.controls.append(
+                ft.ListTile(
+                    leading=ft.Icon(ft.Icons.PERSON_OUTLINE),
+                    title=ft.Text(u['nome']),
+                    subtitle=ft.Text(f"{u['email']} | Ingressos: {qtd_ingressos}"),
+                    trailing=ft.Icon(ft.Icons.ADMIN_PANEL_SETTINGS if u.get('admin') else None, color="blue")
+                )
+            )
+
+        modal_user = ft.AlertDialog(
+            title=ft.Text("Gestão de Utilizadores"),
+            content=lista_users_ui,
+            actions=[ft.TextButton("Fechar", on_click=lambda _: setattr(modal_user, "open", False) or page.update())]
+        )
+        page.overlay.append(modal_user)
+        modal_user.open = True
+        page.update()
+
+    # --- BOTÕES DE AÇÃO ATUALIZADOS ---
+    acoes = ft.Row([
+        ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento, bgcolor="#0D004E", color="white"),
+
+        # O BOTÃO QUE ACIONA A CÂMERA
+        ft.ElevatedButton("Escanear QR", icon=ft.Icons.QR_CODE_SCANNER, on_click=abrir_leitor_camera, bgcolor="#0D004E", color="white"),
+
+        ft.ElevatedButton("Gerenciar Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios, bgcolor="#0D004E", color="white"),
+    ], alignment=ft.MainAxisAlignment.CENTER)
+
+    # Montagem da Página
+    page.add(
+        header,
+        ft.Divider(height=20, color="transparent"),
+        stats_cards,
+        ft.Divider(height=20),
+        ft.Text("Logs de Ingressos Comprados", size=20, weight="bold"),
+        lista_ingressos,
+        ft.Divider(height=20, color="transparent"),
+        acoes
+    )
+
+    # Carregar dados iniciais
+    atualizar_dados()

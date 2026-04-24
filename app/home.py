@@ -162,14 +162,12 @@ def home(page):
     
     # Sincronizar nome do usuário
     def sincronizar_usuario():
-        # Agora não fazemos um request novo, apenas pegamos o nome que 
-        # salvamos no login.py usando o set_storage
         nome = get_storage(page, "nome")
     
         if nome:
             return nome
     
-        return "Visitante"
+        return "Usuário"
     nome_usuario = sincronizar_usuario()
     
     page.add(
@@ -206,7 +204,7 @@ def home(page):
                     grid_responsivo,
                     # Footer
                     ft.Container(
-                        content=ft.Text("© 2026 Marcos. Todos os direitos reservados kkk.", size=12, color="white"),
+                        content=ft.Text("© 2026 Marcos. Todos os direitos reservados kkk. (E agora atualizado por Bene)", size=12, color="white"),
                         alignment=ft.Alignment.CENTER,
                         padding=10,
                         bgcolor="#0D004E",
