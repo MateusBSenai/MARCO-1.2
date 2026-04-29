@@ -71,12 +71,10 @@ def wallet(page):
             modal.open = False
             page.update()
 
-        # 3. Criamos o Modal usando 'src_base64' em vez de 'src'
         modal = ft.AlertDialog(
             title=ft.Text(f"Ingresso: {titulo_evento}"),
             content=ft.Column([
                 ft.Image(
-                    # Adicionamos o cabeçalho que o navegador precisa para entender que é uma imagem
                     src=f"data:image/png;base64,{img_base64}", 
                     width=200, 
                     height=200
@@ -96,9 +94,8 @@ def wallet(page):
     for ing in ingressos:
         ev = ing.get("eventos_db", {})
         foto = ev.get("foto_evento")
-        usado = ing.get("usado", False) # Verifica se já foi usado
+        usado = ing.get("usado", False) 
 
-        # Se o ingresso já foi usado, vamos colocar uma marca d'água ou mudar a cor
         cor_fundo = "white" if not usado else "#f0f0f0"
         
         detalhes = ft.Column([
@@ -114,7 +111,7 @@ def wallet(page):
             on_click=lambda e, h=ing["qr_code_hash"], t=ev.get("titulo"): ver_qr_code(h, t),
             bgcolor="#0D004E" if not usado else "grey",
             color="white",
-            disabled=usado # Opcional: desativa o botão se já usou
+            disabled=usado
         )
 
         lista_ingressos.controls.append(
@@ -140,7 +137,7 @@ def wallet(page):
             )
         )
 
-    page.clean() # Garante que a página está limpa antes de montar a carteira
+    page.clean()
     page.add(
         ft.Container(
             content=ft.Row([

@@ -5,7 +5,6 @@ from config import SUPABASE_URL, HEADERS
 import requests
 
 def buscar_eventos():
-    # URL padrão do PostgREST do Supabase
     url = f"{SUPABASE_URL}/eventos_db?select=*"
     try:
         response = requests.get(url, headers=HEADERS)
@@ -16,7 +15,6 @@ def buscar_eventos():
 
 def home(page):
     print("Page: Home")
-    # Define o estado da página atual para controle do polling
     set_storage(page, "current_page", "home")
     
     page.title = "Home - Agenda de Eventos"
@@ -25,7 +23,7 @@ def home(page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.bgcolor = "#E8E8E8"
 
-    def sair(): # Logout
+    def sair():
         set_storage(page, "current_page", "logout")
         set_storage(page, "logado", False)
         set_storage(page, "email", None)
@@ -63,7 +61,6 @@ def home(page):
         width=35,
         height=35
     )
-    #bnt = button
     btn_carrinho = ft.IconButton(
         icon=ft.Icons.SHOPPING_CART,
         on_click=ir_carrinho,
@@ -93,7 +90,6 @@ def home(page):
     
     logado = get_storage(page, "logado")
     
-    # Se tiver logado, carega os outros botoes, se não, só o login
     header_actions = [btn_carrinho]
     if logado:
         header_actions.append(btn_wallet)
@@ -103,11 +99,11 @@ def home(page):
 
     carrossel_parado = ft.Container(
         content=ft.Image(
-            src="images/flork.png",
+            src="assets/images/flork.png",
             height=400,
-            fit="cover", # Ocupa a largura toda
+            fit="cover", 
         ),
-        width=float("inf"), # 100% width
+        width=float("inf"), 
         alignment=ft.Alignment.CENTER,
     )
 
@@ -116,8 +112,6 @@ def home(page):
         cart = get_storage(page, "cart") or []
         
         def mostrar_feedback(texto, cor):
-            # Remove snackbars antigos para não acumular
-            # Colocar delay depois pra ele sumir automaticamente
             page.overlay.clear() 
             snack = ft.SnackBar(
                 ft.Text(texto),
@@ -140,10 +134,7 @@ def home(page):
     cards = []
     response = buscar_eventos()
     print("Status:", response.status_code)
-    # print("Resposta:", response.text)
     dados = response.json()
-    
-    # Cards já personalizados para flet
     for a in dados:
         cards.append(card_evento(a, adicionar_carrinho))
 
@@ -152,15 +143,12 @@ def home(page):
         controls=[
             ft.Container(
                 content=c, 
-                # Considera aquele sistema da tela dividida em 12 partes, pra determinar quantos eventos vai ter de acordo com o tamanho da tela
                 col={"xs": 12, "sm": 6, "md": 4, "lg": 3}) 
                 for c in cards 
             ],
         spacing=10,
         run_spacing=10
     )
-    
-    # Sincronizar nome do usuário
     def sincronizar_usuario():
         nome = get_storage(page, "nome")
     
@@ -171,7 +159,6 @@ def home(page):
     nome_usuario = sincronizar_usuario()
     
     page.add(
-        # Header
         ft.Container(
             ft.Row(
                 controls = [
@@ -188,21 +175,17 @@ def home(page):
             padding=25,
             border_radius=10,
         ),
-        # Conteúdo principal
         ft.Container(
             content=ft.Column(
                 [
                     carrossel_parado,
-                    # Divider pra dar um espaço sem gambiarra
                     ft.Divider(height=10, color="transparent"),
-                    # Saudação com nome do usuário
                     ft.Column([
                         ft.Text(f"Olá {nome_usuario},", size=24, weight="bold", color="#0D004E"),
                         ft.Text("Novas experiências o aguardam", size=16, color="grey"),
                     ], spacing=2),
                     ft.Divider(height=10, color="transparent"),
                     grid_responsivo,
-                    # Footer
                     ft.Container(
                         content=ft.Text("© 2026 Marcos. Todos os direitos reservados kkk. (E agora atualizado por Bene)", size=12, color="white"),
                         alignment=ft.Alignment.CENTER,
@@ -220,12 +203,10 @@ def home(page):
     )
 
     import asyncio
-    # Polling em tempo real (5 segundos)
     async def poll_events():
         last_data = dados
         while True:
             await asyncio.sleep(5)
-            # Para o polling se o usuário não estiver mais na Home
             if get_storage(page, "current_page") != "home":
                 print("Polling: Usuário saiu da Home")
                 break
@@ -234,18 +215,16 @@ def home(page):
                 resp = buscar_eventos()
                 if resp.status_code == 200:
                     new_data = resp.json()
-                    # Se mudar alguma coisa, atualiza tudo
                     if new_data != last_data:
                         print("Polling: Novos eventos encontrados! Atualizando UI...")
                         last_data = new_data
-                        # Limpa os eventos antigos e adiciona os novos
                         grid_responsivo.controls.clear() 
                         
                         for ev in last_data:
                             grid_responsivo.controls.append(
                                 ft.Container(
                                     content=card_evento(ev, adicionar_carrinho), 
-                                    col={"xs": 12, "sm": 6, "md": 4, "lg": 3}) # Responsividade dnv
+                                    col={"xs": 12, "sm": 6, "md": 4, "lg": 3})
                             )
                         page.update()
             except Exception as e:

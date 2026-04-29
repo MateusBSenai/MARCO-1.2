@@ -1,6 +1,6 @@
 import flet as ft
 import requests
-from config import HEADERS, SUPABASE_URL # Import correto do Supabase
+from config import HEADERS, SUPABASE_URL
 from components import botao_home_imagem, get_storage, set_storage
 
 def login(page):
@@ -18,7 +18,7 @@ def login(page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.bgcolor = "#E8E8E8"
 
-    def verificar_senha(e): # Adicionei o 'e' do evento do botão
+    def verificar_senha(e):
         email = email_input.value
         senha = senha_input.value
 
@@ -27,7 +27,6 @@ def login(page):
             page.update()
             return
 
-        # URL no padrão Supabase
         url_query = f"{SUPABASE_URL}/users?email=eq.{email}&hash_senha=eq.{senha}&select=*"
 
         try:
@@ -48,7 +47,7 @@ def login(page):
                     page.clean()
                     if user.get("admin") == True:
                         print("Redirecionando para área ADM")
-                        from admin_panel import admin_panel # Você criará este arquivo
+                        from admin_panel import admin_panel
                         admin_panel(page)
                     else:
                         print("Redirecionando para Home de Usuário")
@@ -90,7 +89,7 @@ def login(page):
     login_button = ft.ElevatedButton(
         "Entrar", 
         width=300, 
-        on_click=verificar_senha, # Chama a função corrigida
+        on_click=verificar_senha,
         bgcolor="#FFD700",
         color="#0D004E"
     )

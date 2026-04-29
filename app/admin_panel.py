@@ -19,7 +19,6 @@ def admin_panel(page):
         Pode ser chamada tanto pelo leitor de câmera quanto pelo campo de texto.
         """
         try:
-            # 1. Busca o ingresso no Supabase pelo Hash
             url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{hash_codigo}&select=id,usado"
             res = requests.get(url, headers=HEADERS).json()
 
@@ -32,7 +31,6 @@ def admin_panel(page):
                     )
                     page.snack_bar.open = True
                 else:
-                    # 2. Se não foi usado, invalida (Check-in)
                     if dar_checkin(ing['id']):
                         page.snack_bar = ft.SnackBar(
                             ft.Text(f"SUCESSO: Ingresso {hash_codigo} Validado!"), 
@@ -65,7 +63,7 @@ def admin_panel(page):
             url = f"{SUPABASE_URL}/ingressos?id=eq.{id_ingresso}"
             r = requests.patch(url, json={"usado": True}, headers=HEADERS)
             if r.status_code in [200, 204]:
-                atualizar_dados() # Atualiza os números na tela
+                atualizar_dados()
                 return True
         except Exception as e:
             print(f"Erro ao invalidar: {e}")
@@ -78,7 +76,6 @@ def admin_panel(page):
             hash_digitado = codigo_input.value
             if not hash_digitado: return
 
-            # Busca no Supabase pelo Hash
             url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{hash_digitado}&select=id,usado"
             res = requests.get(url, headers=HEADERS).json()
 
@@ -141,7 +138,6 @@ def admin_panel(page):
     # --- FUNÇÃO PARA BUSCAR E ATUALIZAR DADOS (O RECARREGAR) ---
     def atualizar_dados(e=None):
         try:
-            # 1. Buscar estatísticas gerais
             r_stats = requests.get(f"{SUPABASE_URL}/ingressos?select=*", headers=HEADERS)
             if r_stats.status_code == 200:
                 dados_total = r_stats.json()
@@ -151,7 +147,6 @@ def admin_panel(page):
                 txt_vendidos.value = str(total)
                 txt_presentes.value = str(presentes)
 
-            # 2. Buscar lista detalhada
             url_detalhada = f"{SUPABASE_URL}/ingressos?select=*,users(nome),eventos_db(titulo,valor_evento)"
             r_detalhes = requests.get(url_detalhada, headers=HEADERS)
             
@@ -166,7 +161,6 @@ def admin_panel(page):
                     usado = ing.get("usado", False)
                     id_ingresso = ing.get("id") # Precisamos do ID para o banco
 
-                    # 1. CRIAR O BOTÃO DE CHECK-IN (Só aparece se não foi usado)
                     botao_checkin = ft.IconButton(
                         icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
                         icon_color="green",
@@ -174,7 +168,6 @@ def admin_panel(page):
                         on_click=lambda e, idx=id_ingresso: dar_checkin(idx)
                     ) if not usado else ft.Icon(ft.Icons.DONE_ALL, color="blue", size=20)
 
-                    # 2. ADICIONAR AO CONTAINER NA LISTA
                     lista_ingressos.controls.append(
                         ft.Container(
                             content=ft.Row([
@@ -201,7 +194,7 @@ def admin_panel(page):
                         )
                     )
             
-            page.update() # Agora ele vai chegar aqui sem erros!
+            page.update()
             
         except Exception as ex:
             print(f"Erro ao recarregar: {ex}")
@@ -227,7 +220,7 @@ def admin_panel(page):
         )
     ])
 
-    # Botões de Ação (Com o botão central alterado conforme pedido)
+    # Botões de Ação
     # --- FUNÇÕES PARA ABRIR MODAIS ---
     
     def abrir_novo_evento(e):
@@ -241,7 +234,7 @@ def admin_panel(page):
         def salvar_evento(e):
             try:
                 # Pegando os valores
-                data_digitada = data_input.value.replace("/", "") # Remove barras se o usuário digitar
+                data_digitada = data_input.value.replace("/", "") 
 
                 # Converte DDMMYYYY para YYYY-MM-DD
                 if len(data_digitada) == 8:
@@ -252,10 +245,10 @@ def admin_panel(page):
 
                 novo_evento = {
                     "titulo": titulo_input.value,
-                    "data_evento": data_formatada, # Agora vai como 2008-06-12
+                    "data_evento": data_formatada,
                     "local_evento": local_input.value,
                     "valor_evento": float(valor_input.value.replace(',', '.')),
-                    "hora_evento": "20:00:00", # Adicionei uma hora padrão, ajuste se tiver o campo
+                    "hora_evento": "20:00:00",
                     "foto_evento": url_imagem.value if url_imagem.value else None
                 }
 
@@ -319,6 +312,7 @@ def admin_panel(page):
         # OPÇÃO 2: CÓDIGO (Foca no uso Web/Render)
         ft.ElevatedButton("Validar (Código)", icon=ft.Icons.KEYBOARD, on_click=abrir_leitor_manual),
 
+        # OPÇÃO 3: USUÁRIOS (Gerenciamento básico de usuários e visualização de ingressos)
         ft.ElevatedButton("Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
@@ -334,5 +328,4 @@ def admin_panel(page):
         acoes
     )
 
-    # Carregar dados iniciais
     atualizar_dados()
