@@ -103,7 +103,7 @@ def home(page):
 
     carrossel_parado = ft.Container(
         content=ft.Image(
-            src="assets/images/flork.png",
+            src="images/flork.png",
             height=400,
             fit="cover", # Ocupa a largura toda
         ),
