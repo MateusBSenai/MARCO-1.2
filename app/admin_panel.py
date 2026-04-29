@@ -202,11 +202,11 @@ def admin_panel(page):
     # --- COMPONENTES VISUAIS ---
 
     header = ft.Row([
-        ft.Text("Área Administrativa - Magnus", size=30, weight="bold", color="#0D004E"),
+        ft.Text("Painel Admin", size=22, weight="bold", color="#0D004E"), # Título menor para mobile
         ft.Row([
-            ft.IconButton(ft.Icons.REFRESH, on_click=atualizar_dados, icon_color="blue", tooltip="Recarregar dados"),
+            ft.IconButton(ft.Icons.REFRESH, on_click=atualizar_dados, icon_color="blue"),
             ft.IconButton(ft.Icons.LOGOUT, on_click=sair, icon_color="red"),
-        ])
+        ], spacing=0)
     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
     stats_cards = ft.Row([
@@ -303,18 +303,18 @@ def admin_panel(page):
         page.update()
 
     # --- BOTÕES DE AÇÃO ATUALIZADOS ---
-    acoes = ft.Row([
-        ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento),
-
-        # OPÇÃO 1: CÂMERA (Foca no uso local/desktop)
-        ft.ElevatedButton("Escanear (Câmera)", icon=ft.Icons.CAMERA_ALT, on_click=abrir_leitor_camera),
-
-        # OPÇÃO 2: CÓDIGO (Foca no uso Web/Render)
-        ft.ElevatedButton("Validar (Código)", icon=ft.Icons.KEYBOARD, on_click=abrir_leitor_manual),
-
-        # OPÇÃO 3: USUÁRIOS (Gerenciamento básico de usuários e visualização de ingressos)
-        ft.ElevatedButton("Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios),
-    ], alignment=ft.MainAxisAlignment.CENTER)
+    acoes = ft.Row(
+        controls=[
+            ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento),
+            ft.ElevatedButton("Escanear (Câmera)", icon=ft.Icons.CAMERA_ALT, on_click=abrir_leitor_camera),
+            ft.ElevatedButton("Validar (Código)", icon=ft.Icons.KEYBOARD, on_click=abrir_leitor_manual),
+            ft.ElevatedButton("Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios),
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        wrap=True,      # FUNDAMENTAL: Faz os botões quebrarem linha no celular
+        spacing=10,     # Espaço entre botões na mesma linha
+        run_spacing=10  # Espaço entre as linhas criadas pelo wrap
+    )
 
     # Montagem da Página
     page.add(

@@ -160,19 +160,23 @@ def home(page):
     
     page.add(
         ft.Container(
-            ft.Row(
-                controls = [
+            content=ft.Row(
+                controls=[
                     logo,
-                    texto_header,
-                    ft.Container(expand=True),
-                    ft.Row(controls=header_actions),
+                    # Envolvemos o texto em uma coluna com expand para ele ocupar o espaço 
+                    # disponível e empurrar os ícones para a direita sem jogá-los fora da tela
+                    ft.Column([texto1, texto2], spacing=0, expand=True), 
+                    ft.Row(
+                        controls=header_actions,
+                        spacing=0, # Reduz o espaço entre ícones no celular
+                        alignment=ft.MainAxisAlignment.END,
+                    ),
                 ],
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=20,
-                expand=True
+                # Remova o expand=True daqui se ele estiver dentro de um Container fixo
             ),
             bgcolor="#0D004E",
-            padding=25,
+            padding=ft.padding.only(left=15, right=10, top=10, bottom=10),
             border_radius=10,
         ),
         ft.Container(
