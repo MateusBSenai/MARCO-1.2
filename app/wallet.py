@@ -2,6 +2,8 @@ import flet as ft
 import requests
 import qrcode
 import os
+import io
+import base64
 # Removi o import do httpcore que estava conflitando
 from components import botao_home, get_storage, set_storage
 from config import SUPABASE_URL, HEADERS
@@ -54,32 +56,36 @@ def wallet(page):
     ingressos = buscar_ingressos()
 
     def ver_qr_code(hash_val, titulo_evento):
-        # Gera o QR Code
+        # 1. Gera o QR Code na memória (sem salvar arquivo no disco)
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(hash_val)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
     
-        # Garante que a pasta assets existe
-        if not os.path.exists("assets"):
-            os.makedirs("assets")
-            
-        path_img = os.path.join("assets", "temp_qr.png")
-        img.save(path_img)
-    
+        # 2. Converte a imagem para Base64 (um formato que o Flet lê como texto)
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode()
+
         def fechar_modal(e):
             modal.open = False
             page.update()
 
+        # 3. Criamos o Modal usando 'src_base64' em vez de 'src'
         modal = ft.AlertDialog(
             title=ft.Text(f"Ingresso: {titulo_evento}"),
             content=ft.Column([
-                ft.Image(src=path_img, width=200, height=200),
+                ft.Image(
+                    # Adicionamos o cabeçalho que o navegador precisa para entender que é uma imagem
+                    src=f"data:image/png;base64,{img_base64}", 
+                    width=200, 
+                    height=200
+                ),
                 ft.Text(f"Código: {hash_val[:10]}...", size=12, color="grey")
             ], tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             actions=[ft.TextButton("Fechar", on_click=fechar_modal)],
         )
-    
+
         page.overlay.append(modal)
         modal.open = True
         page.update()

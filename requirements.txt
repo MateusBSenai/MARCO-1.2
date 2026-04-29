@@ -3,3 +3,4 @@ requests
 opencv-python-headless
 qrcode
 pillow
+opencv-python
