@@ -13,6 +13,46 @@ def admin_panel(page):
     txt_presentes = ft.Text("0", size=30, color="#0D004E", weight="bold")
     lista_ingressos = ft.Column(spacing=10)
 
+    def validar_pelo_hash(hash_codigo):
+        """
+        Função centralizada para buscar o ingresso no banco e invalidar se necessário.
+        Pode ser chamada tanto pelo leitor de câmera quanto pelo campo de texto.
+        """
+        try:
+            # 1. Busca o ingresso no Supabase pelo Hash
+            url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{hash_codigo}&select=id,usado"
+            res = requests.get(url, headers=HEADERS).json()
+
+            if res:
+                ing = res[0]
+                if ing['usado']:
+                    page.snack_bar = ft.SnackBar(
+                        ft.Text(f"ERRO: O código {hash_codigo} já foi utilizado!"), 
+                        bgcolor="red"
+                    )
+                    page.snack_bar.open = True
+                else:
+                    # 2. Se não foi usado, invalida (Check-in)
+                    if dar_checkin(ing['id']):
+                        page.snack_bar = ft.SnackBar(
+                            ft.Text(f"SUCESSO: Ingresso {hash_codigo} Validado!"), 
+                            bgcolor="green"
+                        )
+                        page.snack_bar.open = True
+            else:
+                page.snack_bar = ft.SnackBar(
+                    ft.Text("Código não encontrado no sistema!"), 
+                    bgcolor="orange"
+                )
+                page.snack_bar.open = True
+            
+        except Exception as e:
+            print(f"Erro na validação: {e}")
+            page.snack_bar = ft.SnackBar(ft.Text("Erro de conexão com o banco!"))
+            page.snack_bar.open = True
+    
+        page.update()
+
     def sair(e):
         from components import set_storage
         set_storage(page, "logado", False)
@@ -31,42 +71,72 @@ def admin_panel(page):
             print(f"Erro ao invalidar: {e}")
         return False
     
-    def abrir_leitor_camera(e):
-        cap = cv2.VideoCapture(0) # Abre a webcam
-        detector = cv2.QRCodeDetector()
+    def abrir_leitor_manual(e):
+        codigo_input = ft.TextField(label="Digite o Hash do QR Code", expand=True, autofocus=True)
 
-        # Snackbar para avisar o admin
-        page.snack_bar = ft.SnackBar(ft.Text("Câmera aberta! Aponte para o QR Code do cliente."))
-        page.snack_bar.open = True
+        def processar_validacao(e):
+            hash_digitado = codigo_input.value
+            if not hash_digitado: return
+
+            # Busca no Supabase pelo Hash
+            url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{hash_digitado}&select=id,usado"
+            res = requests.get(url, headers=HEADERS).json()
+
+            if res:
+                ing = res[0]
+                if ing['usado']:
+                    page.snack_bar = ft.SnackBar(ft.Text("ERRO: Ingresso já utilizado!"), bgcolor="red")
+                else:
+                    dar_checkin(ing['id'])
+                    page.snack_bar = ft.SnackBar(ft.Text("SUCESSO: Entrada Liberada!"), bgcolor="green")
+                    modal_manual.open = False
+            else:
+                page.snack_bar = ft.SnackBar(ft.Text("Código Inválido!"), bgcolor="orange")
+
+            page.snack_bar.open = True
+            page.update()
+
+        modal_manual = ft.AlertDialog(
+            title=ft.Text("Validação Manual"),
+            content=ft.Column([ft.Text("Use esta opção se estiver no site (Render)"), codigo_input], tight=True),
+            actions=[ft.ElevatedButton("Validar", on_click=processar_validacao)]
+        )
+
+        page.overlay.append(modal_manual)
+        modal_manual.open = True
         page.update()
 
-        while True:
-            _, img = cap.read()
-            data, bbox, _ = detector.detectAndDecode(img)
+# --- FUNÇÃO DE CÂMERA (COM PROTEÇÃO PARA NÃO CRASHAR NO RENDER) ---
+    def abrir_leitor_camera(e):
+        try:
+            import cv2
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                raise Exception("Câmera não encontrada")
 
-            if data: # Se ele leu o texto do QR Code
-                # Busca o ingresso no Supabase por aquele código (hash)
-                url = f"{SUPABASE_URL}/ingressos?qr_code_hash=eq.{data}&select=id,usado"
-                res = requests.get(url, headers=HEADERS).json()
+            detector = cv2.QRCodeDetector()
 
-                if res:
-                    ing = res[0]
-                    if ing['usado']:
-                        page.snack_bar = ft.SnackBar(ft.Text("ERRO: Este QR Code já foi utilizado!", bgcolor="red"))
-                    else:
-                        dar_checkin(ing['id']) # CHAMA A FUNÇÃO DE INVALIDAR
-                        page.snack_bar = ft.SnackBar(ft.Text("SUCESSO: Entrada Liberada!", bgcolor="green"))
+            # Se chegar aqui, a câmera abriu (provavelmente rodando local no PC)
+            while True:
+                ret, img = cap.read()
+                if not ret: break
 
-                    page.snack_bar.open = True
-                    page.update()
-                    break # Fecha a câmera após ler
+                data, _, _ = detector.detectAndDecode(img)
+                if data: # 'data' é o texto lido pelo QR
+                    validar_pelo_hash(data)
+                    break
+                    
+                cv2.imshow("Leitor Magnus (Pressione ESC)", img)
+                if cv2.waitKey(1) == 27: break
+            
+            cap.release()
+            cv2.destroyAllWindows()
         
-            cv2.imshow("Leitor Magnus - Pressione Q para sair", img)
-            if cv2.waitKey(1) == ord('q'): # Se apertar 'Q', fecha
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()
+        except Exception as ex:
+            # Se der erro (como no Render), abre o manual automaticamente e avisa
+            page.snack_bar = ft.SnackBar(ft.Text(f"Câmera indisponível no servidor: {ex}"), bgcolor="orange")
+            page.snack_bar.open = True
+            abrir_leitor_manual(None)
 
     # --- FUNÇÃO PARA BUSCAR E ATUALIZAR DADOS (O RECARREGAR) ---
     def atualizar_dados(e=None):
@@ -241,12 +311,15 @@ def admin_panel(page):
 
     # --- BOTÕES DE AÇÃO ATUALIZADOS ---
     acoes = ft.Row([
-        ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento, bgcolor="#0D004E", color="white"),
+        ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento),
 
-        # O BOTÃO QUE ACIONA A CÂMERA
-        ft.ElevatedButton("Escanear QR", icon=ft.Icons.QR_CODE_SCANNER, on_click=abrir_leitor_camera, bgcolor="#0D004E", color="white"),
+        # OPÇÃO 1: CÂMERA (Foca no uso local/desktop)
+        ft.ElevatedButton("Escanear (Câmera)", icon=ft.Icons.CAMERA_ALT, on_click=abrir_leitor_camera),
 
-        ft.ElevatedButton("Gerenciar Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios, bgcolor="#0D004E", color="white"),
+        # OPÇÃO 2: CÓDIGO (Foca no uso Web/Render)
+        ft.ElevatedButton("Validar (Código)", icon=ft.Icons.KEYBOARD, on_click=abrir_leitor_manual),
+
+        ft.ElevatedButton("Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
     # Montagem da Página
