@@ -1,18 +1,18 @@
 import flet as ft 
 import requests
 from components import botao_home_imagem, get_storage, set_storage
-from config import HEADERS, SUPABASE_URL # Importação corrigida (sem o prefixo app.)
+from config import HEADERS, SUPABASE_URL 
 
 def cadastro(page):
     set_storage(page, "current_page", "cadastro")
     print("Page: Cadastro")
 
-    def tela_login(e): # Adicionado 'e' para o evento de clique
+    def tela_login(e): 
         page.clean()
         from login import login
         login(page)
         
-    def cadastrar(e): # Adicionado 'e' para o evento de clique
+    def cadastrar(e): 
         nome = nome_input.value
         email = email_input.value
         senha = senha_input.value
@@ -22,19 +22,16 @@ def cadastro(page):
             page.update()
             return
 
-        # URL da tabela no Supabase
         URL = f"{SUPABASE_URL}/users"
         
-        # Corpo do JSON no padrão das colunas que criamos no SQL
         corpo = {
             "nome": nome,
             "email": email,
-            "hash_senha": senha, # No SQL usamos 'hash_senha'
+            "hash_senha": senha,
             "admin": False
         }
 
         try:
-            # POST direto para o Supabase usando os HEADERS de autenticação
             response = requests.post(URL, json=corpo, headers=HEADERS)
             
             print("Status Cadastro:", response.status_code)
@@ -58,7 +55,6 @@ def cadastro(page):
             mensagem_erro.value = "Erro de conexão com o servidor!"
             page.update()
     
-    # UI do Cadastro (Igual à sua original, apenas corrigindo os botões)
     texto1 = ft.Text("Cadastro", size=30, weight="bold", color="white")
     texto2 = ft.Text("Crie sua conta no AccessPass", size=18, color="white")
     
@@ -69,7 +65,7 @@ def cadastro(page):
     cadastro_button = ft.ElevatedButton(
         "Cadastrar", 
         width=300, 
-        on_click=cadastrar, # Função corrigida
+        on_click=cadastrar, 
         bgcolor="#FFD700",
         color="#0D004E"
     )
@@ -78,7 +74,7 @@ def cadastro(page):
         "Já tem conta? Login", 
         width=300,
         style=ft.ButtonStyle(color=ft.Colors.WHITE),
-        on_click=tela_login # Função corrigida
+        on_click=tela_login 
     )
 
     mensagem_erro = ft.Text("", color=ft.Colors.RED, weight="bold", size=14)

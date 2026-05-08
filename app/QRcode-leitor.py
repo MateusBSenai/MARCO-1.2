@@ -29,7 +29,7 @@ def validar_entrada(hash_recebido):
     ingresso = response.json()
 
     if not ingresso:
-        print("ERRO: Ingresso Inválido!")
+        print(f"ERRO: Ingresso {hash_recebido} Inválido!") #
         return
 
     if ingresso[0]['usado']:

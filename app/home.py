@@ -138,7 +138,6 @@ def home(page):
     for a in dados:
         cards.append(card_evento(a, adicionar_carrinho))
 
-    # Grid de Eventos Responsivo
     grid_responsivo = ft.ResponsiveRow(
         controls=[
             ft.Container(
@@ -163,17 +162,14 @@ def home(page):
             content=ft.Row(
                 controls=[
                     logo,
-                    # Envolvemos o texto em uma coluna com expand para ele ocupar o espaço 
-                    # disponível e empurrar os ícones para a direita sem jogá-los fora da tela
                     ft.Column([texto1, texto2], spacing=0, expand=True), 
                     ft.Row(
                         controls=header_actions,
-                        spacing=0, # Reduz o espaço entre ícones no celular
+                        spacing=0, 
                         alignment=ft.MainAxisAlignment.END,
                     ),
                 ],
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                # Remova o expand=True daqui se ele estiver dentro de um Container fixo
             ),
             bgcolor="#0D004E",
             padding=ft.padding.only(left=15, right=10, top=10, bottom=10),

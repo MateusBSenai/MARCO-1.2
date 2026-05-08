@@ -113,13 +113,12 @@ def admin_panel(page):
 
             detector = cv2.QRCodeDetector()
 
-            # Se chegar aqui, a câmera abriu (provavelmente rodando local no PC)
             while True:
                 ret, img = cap.read()
                 if not ret: break
 
                 data, _, _ = detector.detectAndDecode(img)
-                if data: # 'data' é o texto lido pelo QR
+                if data: 
                     validar_pelo_hash(data)
                     break
                     
@@ -130,7 +129,6 @@ def admin_panel(page):
             cv2.destroyAllWindows()
         
         except Exception as ex:
-            # Se der erro (como no Render), abre o manual automaticamente e avisa
             page.snack_bar = ft.SnackBar(ft.Text(f"Câmera indisponível no servidor: {ex}"), bgcolor="orange")
             page.snack_bar.open = True
             abrir_leitor_manual(None)
@@ -159,7 +157,7 @@ def admin_panel(page):
                     nome_evento = ing.get("eventos_db", {}).get("titulo", "N/A")
                     valor = ing.get("eventos_db", {}).get("valor_evento", 0.0)
                     usado = ing.get("usado", False)
-                    id_ingresso = ing.get("id") # Precisamos do ID para o banco
+                    id_ingresso = ing.get("id")
 
                     botao_checkin = ft.IconButton(
                         icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
@@ -177,7 +175,6 @@ def admin_panel(page):
                                     ft.Text(f"Evento: {nome_evento} | R$ {valor:.2f}", size=12),
                                 ], expand=True),
                 
-                                # O BOTÃO ENTRA AQUI
                                 botao_checkin, 
                 
                                 ft.Container(
@@ -220,11 +217,9 @@ def admin_panel(page):
         )
     ])
 
-    # Botões de Ação
     # --- FUNÇÕES PARA ABRIR MODAIS ---
     
     def abrir_novo_evento(e):
-        # Campos do formulário (Baseado no seu Evento.php)
         titulo_input = ft.TextField(label="Título do Evento")
         data_input = ft.TextField(label="Data (DD/MM/AAAA)")
         local_input = ft.TextField(label="Local")
@@ -233,7 +228,6 @@ def admin_panel(page):
 
         def salvar_evento(e):
             try:
-                # Pegando os valores
                 data_digitada = data_input.value.replace("/", "") 
 
                 # Converte DDMMYYYY para YYYY-MM-DD
@@ -276,7 +270,6 @@ def admin_panel(page):
         page.update()
 
     def abrir_usuarios(e):
-        # Busca usuários e seus ingressos (count)
         r = requests.get(f"{SUPABASE_URL}/users?select=*,ingressos(count)", headers=HEADERS)
         users = r.json()
         
@@ -302,7 +295,7 @@ def admin_panel(page):
         modal_user.open = True
         page.update()
 
-    # --- BOTÕES DE AÇÃO ATUALIZADOS ---
+    # --- BOTÕES DE AÇÃO ---
     acoes = ft.Row(
         controls=[
             ft.ElevatedButton("Novo Evento", icon=ft.Icons.ADD, on_click=abrir_novo_evento),
@@ -311,12 +304,11 @@ def admin_panel(page):
             ft.ElevatedButton("Usuários", icon=ft.Icons.PERSON, on_click=abrir_usuarios),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
-        wrap=True,      # FUNDAMENTAL: Faz os botões quebrarem linha no celular
-        spacing=10,     # Espaço entre botões na mesma linha
-        run_spacing=10  # Espaço entre as linhas criadas pelo wrap
+        wrap=True,      
+        spacing=10,     
+        run_spacing=10  
     )
 
-    # Montagem da Página
     page.add(
         header,
         ft.Divider(height=20, color="transparent"),

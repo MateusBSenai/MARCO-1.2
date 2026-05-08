@@ -4,7 +4,6 @@ import qrcode
 import os
 import io
 import base64
-# Removi o import do httpcore que estava conflitando
 from components import botao_home, get_storage, set_storage
 from config import SUPABASE_URL, HEADERS
 
@@ -13,11 +12,15 @@ def wallet(page):
     
     page.title = "Minha Carteira - Agenda de Eventos"
     page.bgcolor = "#E8E8E8"
-    page.scroll = ft.ScrollMode.ALWAYS # Garante que role se tiver muitos ingressos
+    page.scroll = ft.ScrollMode.ALWAYS 
 
-    # CORREÇÃO 1: Verificar se está logado usando 'logado' ou 'user_id'
     logado = get_storage(page, "logado")
     user_id = get_storage(page, "user_id")
+
+    def ir_home(e=None):
+        page.clean()
+        from home import home 
+        home(page)
 
     if not logado or not user_id:
         print("Sessão inválida na carteira. Redirecionando...")
@@ -27,7 +30,6 @@ def wallet(page):
         return
     
     def validar_ingresso(ingresso_id):
-        # O método PATCH atualiza apenas o campo que enviarmos
         url_patch = f"{SUPABASE_URL}/ingressos?id=eq.{ingresso_id}"
     
         dados = {"usado": True}
@@ -41,7 +43,6 @@ def wallet(page):
     
 
     def buscar_ingressos():
-        # CORREÇÃO 2: Use nome de variável minúsculo para não conflitar com a classe importada
         endpoint = f"{SUPABASE_URL}/ingressos?user_id=eq.{user_id}&select=*,eventos_db(*)"
     
         try:
@@ -56,13 +57,11 @@ def wallet(page):
     ingressos = buscar_ingressos()
 
     def ver_qr_code(hash_val, titulo_evento):
-        # 1. Gera o QR Code na memória (sem salvar arquivo no disco)
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(hash_val)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
     
-        # 2. Converte a imagem para Base64 (um formato que o Flet lê como texto)
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
@@ -129,13 +128,35 @@ def wallet(page):
         )
 
     if not ingressos:
-        lista_ingressos.controls.append(
+        page.clean()
+        page.add(
             ft.Container(
-                content=ft.Text("Você ainda não possui ingressos.", size=16, color="grey"),
-                alignment=ft.alignment.center,
-                padding=50
+                content=ft.Row([
+                    ft.Image(src="icons/logo_temporaria.png", width=35, height=35), 
+                    ft.Text("Minha Carteira", size=20, weight="bold", color="white"),
+                    ft.Container(expand=True),
+                    botao_home(page)
+                ]),
+                bgcolor="#0D004E",
+                padding=20,
+                border_radius=10,
+            ),
+            ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.CONFIRMATION_NUMBER_OUTLINED, size=64, color="grey"),
+                    ft.Text("Sua carteira está vazia", size=20, color="grey", weight="bold"),
+                    ft.Text("Compre ingressos na página inicial", color="grey"),
+                    ft.ElevatedButton(
+                        "Ver Eventos", 
+                        icon=ft.Icons.HOME, 
+                        on_click=ir_home
+                    )
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=100,
+                alignment=ft.alignment.Alignment(0, 0)
             )
         )
+        return
 
     page.clean()
     page.add(

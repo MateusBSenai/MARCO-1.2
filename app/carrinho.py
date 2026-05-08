@@ -3,6 +3,7 @@ from httpcore import URL
 import requests
 from components import botao_home, get_storage, set_storage
 from config import SUPABASE_URL, HEADERS
+import uuid
 
 def carrinho(page):
     set_storage(page, "current_page", "carrinho")
@@ -25,17 +26,16 @@ def carrinho(page):
         
         try:
             for item in cart:
+                sufixo = uuid.uuid4().hex[:6] 
                 dados = {
                     "user_id": user_id,
                     "evento_id": item["id"],
-                    "qr_code_hash": f"PASS_{user_id}_{item['id']}" # Geramos um hash simples
+                    "qr_code_hash": f"PASS_{user_id}_{item['id']}_{sufixo}" 
                 }
                 requests.post(URL_INGRESSOS, json=dados, headers=HEADERS)
             
-            # Limpar carrinho após sucesso
             set_storage(page, "cart", [])
             
-            # Modal de sucesso simbólico
             def fechar_sucesso(e):
                 sucesso_chamada.open = False
                 page.update()
@@ -66,12 +66,10 @@ def carrinho(page):
                 ],
                 actions_alignment=ft.MainAxisAlignment.CENTER,
             )
-            # overlay: a camada acima da pagina, em resumo
             page.overlay.append(sucesso_chamada)
             sucesso_chamada.open = True
             page.update()
 
-        # Erros de conexão ou inesperados
         except Exception as err:
             print("Erro na requisição:", err)
             page.overlay.append(ft.SnackBar(ft.Text("Erro ao processar compra."), open=True))
@@ -126,7 +124,6 @@ def carrinho(page):
             actions=[
                 ft.TextButton(
                     "Cancelar", 
-                    # Fechar o modal e atualizar a pagina
                     on_click=lambda _: setattr(alerta_pagamento, "open", False) or page.update(), 
                     style=ft.ButtonStyle(color="white70")
                 )
@@ -199,7 +196,6 @@ def carrinho(page):
             border_radius=10,
         ),
         
-        # No final da pagina, Total e Finalizar Compra
         ft.Container(
             content=ft.Column(
                 [
